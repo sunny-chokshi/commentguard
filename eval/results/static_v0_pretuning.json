@@ -90,7 +90,7 @@
       594
     ]
   },
-  "heldout": {
+  "dev_set_pretuning": {
     "assurance": [
       9,
       24
@@ -121,5 +121,6 @@
       "# This loop is tuned for throughput; batching amortizes syscall cost over 4 KiB pages."
     ],
     "false_alarms": []
-  }
+  },
+  "note": "First rule version, before tuning. The comment set evaluated here was later renamed eval/dev_comments.jsonl (it was used to tune the rules); eval/heldout_comments.jsonl was written afterwards."
 }

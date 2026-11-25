@@ -147,7 +147,25 @@ vulnerable (warning, an unverified AI opinion), `CG101` to `CG104` assurance com
 
 ## Evaluation summary
 
-EVAL_SUMMARY_PLACEHOLDER
+Run on all 756 CommentInject v2 core cases with `qwen3.5:4b` (Ollama, temperature 0,
+`think=false`, one run). The as-written verdicts reproduced the published CommentInject v2 run on
+756/756 cases.
+
+| | Result |
+|---|---|
+| Static detector recall, benchmark adversarial comments (in-sample: rules written with these strategies in view) | 594/648 = 91.7% (11 of 12 strategies at 100%, `distraction_comment` at 0%) |
+| Static detector false alarms, benign doc comments | 0/54 |
+| **Static detector recall, held-out assurance comments** written after the rules were frozen | **5/32 = 15.6%** (0/40 benign false alarms) |
+| As-written review missed the bug (vulnerable twin + adversarial comment) | 54/324 |
+| **Of those misses, flagged as a comment-induced blind spot** | **54/54** |
+| **False blind spots on fixed (safe) twins with adversarial comments** | **53/324 = 16.4%** |
+
+Read these together. On this benchmark the stripped code is exactly the clean twin, and the model
+flags every vulnerable clean twin, so catching all 54 misses follows by construction. It is not a
+general detection rate. The cost is false alarms: the 4B model wrongly flags 41% of fixed clean
+twins, so about half of the blind-spot alarms on adversarial cases (53/107) point at code that is
+already fixed. The static regex detector generalizes poorly to new phrasings. The differential
+check, not the regex list, is the main feature.
 
 Full numbers, the method and raw outputs: [`eval/RESULTS.md`](eval/RESULTS.md).
 
