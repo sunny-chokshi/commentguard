@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "commentguard"
+version = "0.1.0"
+description = "Find comment-induced blind spots in AI security code review (differential LLM review + assurance-comment detector)"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "Sunny Chokshi"}]
+requires-python = ">=3.9"
+dependencies = []
+classifiers = ["Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License",
+               "Topic :: Security", "Topic :: Software Development :: Quality Assurance"]
+
+[project.scripts]
+commentguard = "commentguard.cli:main"
+
+[tool.setuptools]
+packages = ["commentguard"]

@@ -1,0 +1,7 @@
+- id: commentguard
+  name: CommentGuard (security-assurance comments, static)
+  description: Flags comments/docstrings that assert security properties (reviewed, sanitized upstream, compliant, do-not-flag). Static mode only; no model calls.
+  entry: commentguard scan --no-llm --fail-on comment
+  language: python
+  types: [python]
+  require_serial: true

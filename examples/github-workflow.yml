@@ -1,0 +1,22 @@
+# Copy to .github/workflows/commentguard.yml in your repository.
+name: CommentGuard
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write   # upload SARIF to code scanning
+
+jobs:
+  commentguard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # needed to diff against the PR base
+      - uses: OWNER/commentguard@v0.1.0   # replace OWNER once the repository is public
+        with:
+          mode: static         # or: ollama (pulls a local model in the runner; slower)
+          fail-on: comment     # static mode: fail when assurance comments are added

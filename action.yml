@@ -1,0 +1,111 @@
+name: "CommentGuard"
+description: "Find comment-induced blind spots in AI security review of changed Python files, and upload SARIF to GitHub code scanning."
+author: "Sunny Chokshi"
+branding:
+  icon: "shield"
+  color: "purple"
+
+inputs:
+  paths:
+    description: "Files or directories to scan (space separated)."
+    default: "."
+  mode:
+    description: "'static' = assurance-comment detector only (fast, no model). 'ollama' = also run the differential LLM review with a local Ollama model inside the runner."
+    default: "static"
+  model:
+    description: "Ollama model for mode 'ollama'."
+    default: "qwen3.5:4b"
+  base-ref:
+    description: "Git ref to diff against. Default: the PR base SHA, or the previous commit on push. Empty diff base scans everything under 'paths'."
+    default: ""
+  fail-on:
+    description: "blind-spot | comment | any | never"
+    default: "blind-spot"
+  sarif-file:
+    description: "Where to write the SARIF file."
+    default: "commentguard.sarif"
+  upload-sarif:
+    description: "Upload the SARIF file to GitHub code scanning (needs permissions: security-events: write)."
+    default: "true"
+  python-version:
+    description: "Python version used to run CommentGuard."
+    default: "3.12"
+
+outputs:
+  sarif-file:
+    description: "Path of the SARIF file."
+    value: ${{ inputs.sarif-file }}
+  exit-code:
+    description: "CommentGuard exit code (0 clean, 1 findings matched fail-on, 2 error)."
+    value: ${{ steps.scan.outputs.exit-code }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install CommentGuard
+      shell: bash
+      run: python -m pip install --quiet "${GITHUB_ACTION_PATH}"
+
+    - name: Start Ollama and pull the model
+      if: inputs.mode == 'ollama'
+      shell: bash
+      env:
+        CG_MODEL: ${{ inputs.model }}
+      run: |
+        curl -fsSL https://ollama.com/install.sh | sh
+        (ollama serve > /tmp/ollama.log 2>&1 &)
+        for i in $(seq 1 30); do curl -sf http://localhost:11434/api/tags >/dev/null && break; sleep 1; done
+        ollama pull "$CG_MODEL"
+
+    - name: Scan
+      id: scan
+      shell: bash
+      env:
+        CG_PATHS: ${{ inputs.paths }}
+        CG_MODE: ${{ inputs.mode }}
+        CG_MODEL: ${{ inputs.model }}
+        CG_BASE: ${{ inputs.base-ref }}
+        CG_FAIL_ON: ${{ inputs.fail-on }}
+        CG_SARIF: ${{ inputs.sarif-file }}
+        PR_BASE: ${{ github.event.pull_request.base.sha }}
+        PUSH_BEFORE: ${{ github.event.before }}
+      run: |
+        base="$CG_BASE"
+        if [ -z "$base" ]; then base="${PR_BASE:-$PUSH_BEFORE}"; fi
+        if [ "$base" = "0000000000000000000000000000000000000000" ]; then base=""; fi
+        args=(scan)
+        read -r -a paths <<< "$CG_PATHS"
+        args+=("${paths[@]}")
+        if [ -n "$base" ] && git cat-file -e "$base^{commit}" 2>/dev/null; then
+          args+=(--diff "$base")
+        elif [ -n "$base" ]; then
+          echo "::warning::base $base not in the checkout (use actions/checkout with fetch-depth: 0); scanning all files"
+        fi
+        if [ "$CG_MODE" != "ollama" ]; then args+=(--no-llm); else args+=(--model "$CG_MODEL"); fi
+        args+=(--sarif "$CG_SARIF" --fail-on "$CG_FAIL_ON")
+        set +e
+        commentguard "${args[@]}"
+        code=$?
+        set -e
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        if [ ! -f "$CG_SARIF" ]; then echo "::error::CommentGuard did not produce SARIF (exit $code)"; exit 2; fi
+
+    - name: Upload SARIF
+      if: always() && inputs.upload-sarif == 'true' && hashFiles(inputs.sarif-file) != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.sarif-file }}
+        category: commentguard
+
+    - name: Apply fail-on policy
+      if: steps.scan.outputs.exit-code != '0'
+      shell: bash
+      env:
+        CODE: ${{ steps.scan.outputs.exit-code }}
+      run: |
+        echo "CommentGuard exit code $CODE (see the Code scanning alerts / SARIF)."
+        exit "$CODE"
