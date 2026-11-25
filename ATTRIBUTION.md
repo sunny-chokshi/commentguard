@@ -15,4 +15,4 @@ The CommentInject repository itself was not modified.
 Everything else (unit extraction, docstring stripping, the static detector rules, the
 differential review and its classification, caching, CLI, SARIF/HTML/JSON output, the GitHub
 Action, the pre-commit hook, the evaluation harness and the tests) was written for CommentGuard
-during Nov 25-28, 2026.
+on Nov 25, 2026 (see the git history).

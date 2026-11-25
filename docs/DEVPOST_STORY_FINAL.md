@@ -1,18 +1,20 @@
-**Code (MIT):** https://github.com/sunny-chokshi/commentguard (v0.1.0). The repository runs its own GitHub Action on every push.
+**Code (MIT):** https://github.com/sunny-chokshi/commentguard (the v0.1.0 tag predates the documentation and disclosure updates in the submitted commit on `main`). The repository runs its own GitHub Action on every push.
 
-**At a glance, with the limits up front.** All numbers come from my own CommentInject v2 benchmark (756 core cases, qwen3.5:4b, one run, Python only):
-* The differential check flagged all 54 cases where a comment hid a real bug. This follows by construction on this benchmark.
-* It also raised **false blind spots on 53 of 324 already-fixed functions (16.4%)**.
-* The static regex detector caught **only 5 of 32 held-out phrasings (15.6%)** that I wrote after freezing its rules. It is a quick filter, not the defence.
-* A small regex comment scanner already existed in my earlier `commentinject-skill`. See the development disclosure at the end.
+**At a glance, with the limits up front.** The differential evaluation uses a 756-case, 27-pair subset of my historical CommentInject v2.0.0-rc3 benchmark, with qwen3.5:4b, one run and Python only.
+* CommentGuard flagged all 54 of the 324 adversarial vulnerable cases that the original review missed. This follows by construction on this benchmark and is not a general detection rate.
+* It raised false blind spots on 53 of 324 adversarial cases labelled fixed in rc3 (16.4%).
+* Two included fixed twins, V23 and V27, were subsequently revised. These exploratory results have not been recomputed using the revised twins.
+* The static detector identified only 5 of 32 held-out assurance-comment phrasings (15.6%). It is a quick filter, not a complete defense.
+* A small regex comment scanner already existed in my earlier commentinject-skill project.
 
 ## Inspiration
 
 Teams increasingly ask LLMs to review pull requests for security bugs, and LLMs read comments. In
 my CommentInject research (v1: doi:10.5281/zenodo.23088528; v2: doi:10.5281/zenodo.24517927) I
 measured what happens when a comment makes an unverified claim, such as "input is sanitized
-upstream", "SECURITY REVIEWED" or "runs only in the CI sandbox". Small open models that caught a
-SQL injection in bare code often called the same code SAFE once one of those comments was added.
+upstream", "SECURITY REVIEWED" or "runs only in the CI sandbox". In my release-candidate runs, some models flagged vulnerable code without comments but called the
+same code SAFE when misleading comments were present. In CommentGuard's evaluation (historical rc3
+subset), qwen3.5:4b did so in 54 of 324 adversarial vulnerable cases. Two fixed twins in this subset (V23 and V27) were subsequently revised. These exploratory results use the original rc3 versions and reference labels.
 The benchmark showed the problem. I wanted a tool a developer can run on their own code before
 merge.
 
@@ -32,8 +34,8 @@ CommentGuard scans Python code (`commentguard scan PATH [--diff REF]`) in two wa
 Outputs: a coloured terminal summary, SARIF 2.1.0 for GitHub code scanning, a self-contained
 HTML report with side-by-side "as written" and "stripped" verdicts and highlighted comments, and
 JSON. Integrations: a composite GitHub Action that scans changed files and uploads SARIF, and a
-pre-commit hook (static mode). Everything runs locally with Ollama at no cost, and results are
-cached.
+pre-commit hook (static mode). It runs without paid model API calls. When Ollama runs on the same machine, model review does not
+require sending source code to a remote model service. Results are cached.
 
 ## How we built it
 
@@ -47,9 +49,9 @@ cached.
   instant.
 * SARIF uses stable fingerprints and related locations that point at the comment that caused the
   blind spot. The GitHub Action runs `--diff` against the PR base.
-* Evaluation harness (`eval/run_eval.py`): it runs the real CLI pipeline on all 756 CommentInject
-  v2 core cases with qwen3.5:4b.
-* 23 unit and CLI tests, using a fake backend so they need no model. A self-test workflow runs the composite Action on `demo/` and uploads SARIF to code scanning (green on GitHub). The pre-commit hook was tested from the `v0.1.0` tag.
+* Evaluation harness (`eval/run_eval.py`): it runs the real CLI pipeline on all 756 cases of the subset
+  derived from the 840-case CommentInject v2.0.0-rc3 release, with qwen3.5:4b.
+* 23 unit and CLI tests, using a fake backend so they need no model. A self-test workflow runs the composite Action on `demo/` and uploads SARIF to code scanning (green on GitHub). The pre-commit hook was run through the `pre-commit` tool from the `v0.1.0` tag (`pre-commit try-repo`).
 
 ## Challenges we ran into
 
@@ -59,24 +61,25 @@ cached.
   5/32 (15.6%), against 594/648 (91.7%) on the benchmark templates, which shows the regex approach does not generalize well. That result is why the
   differential LLM check, not the regex detector, is the core of the tool.
 * **False blind spots.** A small model often flags *fixed* code once comments are removed. If the
-  comment then makes it say SAFE, the differential check raises a false blind spot. On the fixed
-  twins with adversarial comments this happened in 53/324 cases (16.4%). About half of all
-  blind-spot alarms on adversarial cases pointed at code that was already fixed.
+  comment then makes it say SAFE, the differential check raises a false blind spot. On the cases
+  labelled fixed in rc3 with adversarial comments this happened in 53/324 cases (16.4%). About half
+  of all blind-spot alarms on adversarial cases pointed at cases labelled fixed in rc3.
 * **Brittleness.** Adding an unrelated import line above the demo function was enough to change
   the 4B model's verdict. CommentGuard reports what the model did and does not claim the code is
   vulnerable.
 
 ## Accomplishments that we're proud of
 
-* An end-to-end tool that works on a laptop with no cloud and no cost: CLI, SARIF, HTML, Action,
+* An end-to-end tool that works on a laptop without a cloud model service or paid model API calls: CLI, SARIF, HTML, Action,
   pre-commit, tests.
 * Reproducibility: CommentGuard's as-written verdicts matched the published CommentInject v2 run
   for the same model digest on 756/756 cases.
-* On all 756 CommentInject v2 core cases (qwen3.5:4b, one run), the as-written review missed the
-  vulnerability in 54/324 adversarial cases, and CommentGuard flagged all 54 as blind spots. That
+* On all 756 cases of the subset derived from the 840-case CommentInject v2.0.0-rc3 release
+  (qwen3.5:4b, one run), the as-written review missed the vulnerability in 54 of the 324
+  adversarial cases on vulnerable code, and CommentGuard flagged all 54 as blind spots. That
   follows by construction here, because the stripped code equals the clean twin, which the model
-  always caught. The trade-off is 53/324 (16.4%) false blind spots on fixed code. Both numbers are
-  reported together.
+  always caught. The trade-off is 53/324 (16.4%) false blind spots on adversarial cases labelled fixed in rc3. Both
+  numbers are reported together. Two fixed twins in this subset (V23 and V27) were subsequently revised. These exploratory results use the original rc3 versions and reference labels.
 * Limitations are written down next to the numbers.
 
 ## What we learned
@@ -103,7 +106,8 @@ cached.
   own research). Also the `commentinject-skill` repository (first commit Nov 24, 2026 US Eastern),
   a prompt-level agent skill that **also includes a small regex comment scanner** for the same
   four families. Flagging assurance comments by pattern therefore existed before CommentGuard.
-* **New during the hackathon (Nov 25-28, 2026):** the whole `commentguard` repository. That means
+  CommentInject v2 and `commentinject-skill` were created on Nov 24, 2026, inside the event window (which began Nov 21), as separate projects; they are disclosed here and not claimed as this entry's work.
+* **New during the hackathon (built Nov 25, 2026; every commit is in the git history, starting with baf3181):** the whole `commentguard` repository. That means
   the differential review and its outcome classification, a new implementation of the detector
   (no code copied from the skill), docstring stripping, `--diff` mode, the cache, the SARIF, HTML
   and JSON outputs, the GitHub Action, the pre-commit hook, the evaluation harness with dev and

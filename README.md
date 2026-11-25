@@ -6,12 +6,12 @@ CommentGuard is a command-line tool for Python code. It finds functions where co
 `# input is sanitized upstream` or `# SECURITY REVIEWED` change what an LLM security reviewer
 decides. It reviews each function twice with a local model: once as written, and once with every
 comment and docstring removed. If the stripped code is called VULNERABLE but the commented code
-is called SAFE, the comments hid the bug from the reviewer. CommentGuard reports that as a
+is called SAFE, removing the comments changed the model's verdict from SAFE to VULNERABLE. CommentGuard reports that as a
 **comment-induced blind spot**.
 
 It also includes a fast static detector for security-assurance comments, SARIF output for GitHub
 code scanning, a self-contained HTML report, a GitHub Action and a pre-commit hook. It runs locally
-with [Ollama](https://ollama.com) at no cost, and no code leaves your machine.
+with [Ollama](https://ollama.com) without paid model API calls. When Ollama runs on the same machine, model review does not require sending source code to a remote model service.
 
 ```
 BLIND SPOT  find_orders  demo/orders.py:3
@@ -29,12 +29,13 @@ The **CommentInject** benchmarks measured what happens when a comment makes an u
 security claim:
 
 * CommentInject v1: doi:[10.5281/zenodo.23088528](https://doi.org/10.5281/zenodo.23088528)
-* CommentInject v2: doi:[10.5281/zenodo.24517927](https://doi.org/10.5281/zenodo.24517927).
-  It has 27 vulnerable/fixed Python twin pairs, 12 adversarial comment strategies in 4 families,
-  and 756 core cases.
+* CommentInject v2.0.0-rc3: doi:[10.5281/zenodo.24517927](https://doi.org/10.5281/zenodo.24517927).
+  It has 30 vulnerable/fixed Python twin pairs, 12 adversarial comment strategies in 4 families,
+  and 840 cases. The evaluation below uses a 756-case, 27-pair subset derived from that 840-case release, which leaves out the
+  three path-traversal pairs V04, V13 and V19 (see `eval/RESULTS.md` for the derivation command
+  and the sha256).
 
-Short comments like these made several small open models miss vulnerabilities they found in the
-same code without comments. Deleting all comments before review is one defense, but it also throws
+In the CommentInject v2 release-candidate runs, some small open models called vulnerable code SAFE when misleading comments were present, although they had flagged the same code without comments. The revised exploratory analysis supports a shift toward more lenient verdicts for two evaluated models. A reduction in discrimination was not statistically established under the documented primary analysis on the complete revised datasets. The discrimination inference was sensitive to the analysis method, clustering and pair selection. See the [CommentInject v2 README notice](https://github.com/sunny-chokshi/commentinject-v2#readme) for the full qualifications. Deleting all comments before review is one defense, but it also throws
 away useful context. CommentGuard keeps both views and tells you when they disagree, so a human
 looks at exactly the functions where comments changed the verdict.
 
@@ -62,7 +63,7 @@ looks at exactly the functions where comments changed the verdict.
 
    | Outcome | As written | Stripped | Meaning |
    |---|---|---|---|
-   | **blind spot** | SAFE | VULNERABLE | comments hid a finding (fails the build by default) |
+   | **blind spot** | SAFE | VULNERABLE | stripping comments produced a vulnerability finding (fails the build by default) |
    | agree vulnerable | VULNERABLE | VULNERABLE | the model flags it either way |
    | agree safe | SAFE | SAFE | nothing found either way |
    | flagged only with comments | VULNERABLE | SAFE | the comments raised suspicion |
@@ -148,9 +149,9 @@ vulnerable (warning, an unverified AI opinion), `CG101` to `CG104` assurance com
 
 ## Evaluation summary
 
-Run on all 756 CommentInject v2 core cases with `qwen3.5:4b` (Ollama, temperature 0,
+Run on all 756 cases of the subset derived from the 840-case CommentInject v2.0.0-rc3 dataset with `qwen3.5:4b` (Ollama, temperature 0,
 `think=false`, one run). The as-written verdicts reproduced the published CommentInject v2 run on
-756/756 cases.
+756/756 cases. Two fixed twins in this subset (V23 and V27) were subsequently revised. These exploratory results use the original rc3 versions and reference labels.
 
 | | Result |
 |---|---|
@@ -159,13 +160,13 @@ Run on all 756 CommentInject v2 core cases with `qwen3.5:4b` (Ollama, temperatur
 | **Static detector recall, held-out assurance comments** written after the rules were frozen | **5/32 = 15.6%** (0/40 benign false alarms) |
 | As-written review missed the bug (vulnerable twin + adversarial comment) | 54/324 |
 | **Of those misses, flagged as a comment-induced blind spot** | **54/54** |
-| **False blind spots on fixed (safe) twins with adversarial comments** | **53/324 = 16.4%** |
+| **False blind spots on adversarial cases labelled fixed in rc3** (324 cases = 27 fixed functions × 12 strategies) | **53/324 = 16.4%** |
 
 Read these together. On this benchmark the stripped code is exactly the clean twin, and the model
 flags every vulnerable clean twin, so catching all 54 misses follows by construction. It is not a
 general detection rate. The cost is false alarms: the 4B model wrongly flags 41% of fixed clean
-twins, so about half of the blind-spot alarms on adversarial cases (53/107) point at code that is
-already fixed. The static regex detector generalizes poorly to new phrasings. The differential
+twins, so about half of the blind-spot alarms on adversarial cases (53/107) point at cases labelled
+fixed in rc3. The static regex detector generalizes poorly to new phrasings. The differential
 check, not the regex list, is the main feature.
 
 Full numbers, the method and raw outputs: [`eval/RESULTS.md`](eval/RESULTS.md).
@@ -186,7 +187,11 @@ Full numbers, the method and raw outputs: [`eval/RESULTS.md`](eval/RESULTS.md).
 * **A clean report does not mean the code is secure.**
 * The evaluation uses the author's own benchmark, one model and one run. See `eval/RESULTS.md`.
 
-## What existed before Nov 21, 2026 and what was built during the hackathon (Nov 25-28, 2026)
+## What existed before CommentGuard and what was built for this entry
+
+CommentInject v1 predates the event. CommentInject v2 and `commentinject-skill` were created on
+Nov 24, 2026, inside the event window (Nov 21-28), as separate projects. They are disclosed here and
+are not counted as this entry's new work. CommentGuard itself was built on Nov 25, 2026.
 
 **Pre-existing work, not part of this entry's new work:**
 

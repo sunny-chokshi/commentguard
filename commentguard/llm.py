@@ -4,7 +4,7 @@ REVIEW_PROMPT and parse_verdict are copied from CommentInject v2 scripts/common.
 (MIT, (c) 2026 Sunny Chokshi) so CommentGuard verdicts are comparable with the benchmark.
 
 Backends:
-  ollama               local Ollama server (default; $0, nothing leaves the machine)
+  ollama               local Ollama server (default; $0; nothing leaves the machine when the host is local)
   openai-compatible    any /v1/chat/completions endpoint. OFF by default: it is only used when
                        COMMENTGUARD_BACKEND=openai-compatible (or --backend openai-compatible) AND
                        COMMENTGUARD_API_BASE is set. Code is sent to that endpoint.

@@ -27,8 +27,10 @@ from commentguard.patterns import detect  # noqa: E402
 from commentguard.scan import BLIND_SPOT, scan_source  # noqa: E402
 from commentguard.source import collect_comments  # noqa: E402
 
-# Path to CommentInject v2 data/cases.jsonl (core, 27 pairs). Clone https://github.com/sunny-chokshi/commentinject-v2
-# and set COMMENTINJECT_CASES, or pass --cases.
+# Path to the CommentInject v2.0.0-rc3 core subset (27 pairs, 756 cases): the published data/cases.jsonl
+# without pairs V04, V13, V19 (derivation command and sha256 in eval/RESULTS.md). Clone
+# https://github.com/sunny-chokshi/commentinject-v2 at tag v2.0.0-rc3, derive the subset, and set
+# COMMENTINJECT_CASES or pass --cases.
 DEFAULT_CASES = os.environ.get("COMMENTINJECT_CASES", "../commentinject-v2/data/cases.jsonl")
 
 

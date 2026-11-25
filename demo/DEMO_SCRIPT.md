@@ -17,7 +17,7 @@ model or Ollama version may give different verdicts.
 ```bash
 cd commentguard                      # this repository
 python3 -m venv .venv && . .venv/bin/activate && pip install -e .
-ollama pull qwen3.5:4b               # about 3.4 GB, once
+ollama pull qwen3.5:4b               # about 3.3 GB, once
 commentguard scan demo --html out/report.html --sarif out/report.sarif   # warms the cache (about 15 s)
 clear
 ```
@@ -84,6 +84,8 @@ Summary: 3 file(s), 6 function(s), 7 assurance comment(s) in 3 function(s)
 commentguard scan demo --html out/report.html --sarif out/report.sarif
 ```
 
+Say while it runs: "This scan is running now, but the model verdicts are replayed from an earlier run of the same model. No new model inference is taking place." Then open out/report.html and show it.
+
 Expected (the run is served from the cache, so it is instant; a cold run takes about 15 s):
 
 ```
@@ -121,7 +123,9 @@ Summary: 3 file(s), 6 function(s), 7 assurance comment(s) in 3 function(s)
 > Notice `compress_backup`: the HOTFIX docstring did not fool this model, so CommentGuard
 > reports agreement, not a blind spot. It reports what the model actually did."
 
-> "Everything runs locally through Ollama at zero cost. No code leaves the machine."
+> "It runs locally without a paid model API. When Ollama runs on this machine, model review does not require sending source code to a remote model service."
+
+> Evaluation disclosure (on screen or spoken if numbers are shown): "Two fixed twins in this subset (V23 and V27) were subsequently revised. These exploratory results use the original rc3 versions and reference labels."
 
 ## 1:45 to 2:15. HTML report
 
@@ -149,8 +153,9 @@ Then in the terminal:
 cat .pre-commit-hooks.yaml
 ```
 
-> "The same results go out as SARIF 2.1.0, so GitHub code scanning shows them as alerts. This
-> repository runs its own action on every push. There is also a pre-commit hook for static mode.
+> "The same results go out as SARIF 2.1.0 for GitHub code scanning. This repository runs its own
+> action on every push in static mode, so the alerts here are assurance comments; blind spots appear
+> as CG001 alerts when the action runs with a model. There is also a pre-commit hook for static mode.
 > In CI the action scans only changed Python files by default."
 
 ## 2:40 to 3:00. Evaluation and honesty
@@ -159,12 +164,13 @@ cat .pre-commit-hooks.yaml
 sed -n '/## Headline numbers/,/^Per strategy/p' eval/RESULTS.md
 ```
 
-> "I evaluated it on the 756 core cases of my CommentInject v2 benchmark with qwen3.5 4B.
-> The differential check flagged all 54 cases where a comment hid a real bug, but it also raised
-> false blind spots on 16 percent of already-fixed code. The regex detector caught only 5 of 32
+> "I evaluated seven hundred and fifty-six historical benchmark cases using one local model. The original review missed
+> fifty-four of three hundred and twenty-four vulnerable adversarial cases. CommentGuard flagged all fifty-four. That follows
+> by construction, so it is not a general detection rate. The trade-off was fifty-three false blind spots under the original
+> labels. Two included fixed twins were subsequently revised, so these results remain exploratory. The regex detector caught only 5 of 32
 > new phrasings I wrote after freezing its rules, so it is a quick filter, not the defence.
 > Small model, Python only, one run, my own benchmark: the limits are in eval/RESULTS.md.
-> CommentGuard was built this week with AI assistance from Claude Code. Thanks for watching."
+> CommentGuard was built on November 25 with AI assistance from Claude Code. Thanks for watching."
 
 ---
 
