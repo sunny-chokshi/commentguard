@@ -143,7 +143,7 @@ sed -n '1,30p' examples/github-workflow.yml
 ## 2:40 to 3:00. Evaluation and honesty
 
 ```bash
-sed -n '/## Headline numbers/,/## Limitations/p' eval/RESULTS.md
+sed -n '/## Headline numbers/,/^Per strategy/p' eval/RESULTS.md
 ```
 
 > "I evaluated it on the 756 core cases of my CommentInject v2 benchmark with qwen3.5 4B.
