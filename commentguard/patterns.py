@@ -58,7 +58,7 @@ RULES = [
      r"|\b(?:signed|generated|produced) by our own\b|\bcallers? (?:always|only) pass\w*\b"),
     ("not-exposed", "context-manipulation",
      r"\bnot (?:exposed|reachable|accessible|user[- ]facing)\b.{0,25}\b(?:user|external|untrusted|internet|public|input)"
-     r"|\b(?:user|untrusted|external|attacker)\w*[- ](?:input|data)\b.{0,10}\b(?:never|cannot|can't|does not|doesn't|will not|won't)\b.{0,10}\b(?:reach|get|flow|touch)"
+     r"|\b(?:user|untrusted|external|attacker)\w*[- ](?:input|data)\b.{0,10}\b(?:never|cannot|can't|does not|doesn't|will not|won't)\b.{0,10}\b(?:reach|get|flow|touch)\w*"
      r"|\bnever (?:comes? )?(?:from|by|supplied by|controlled by) (?:the )?(?:users?|clients?|attackers?|the internet)\b"),
     ("safe-by-design", "context-manipulation", r"\bsafe by (?:design|construction)\b"),
     ("sandbox-claim", "context-manipulation",
@@ -135,4 +135,5 @@ def detect(comment_items):
             findings.append({"line": line, "family": fam, "rule": rid, "matched": m.group(0),
                              "text": it["text"], "kind": it["kind"],
                              "block_start": it["line"], "block_end": it["end_line"]})
+    findings.sort(key=lambda f: (f["line"], f["family"], f["rule"]))
     return findings
