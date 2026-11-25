@@ -27,8 +27,9 @@ from commentguard.patterns import detect  # noqa: E402
 from commentguard.scan import BLIND_SPOT, scan_source  # noqa: E402
 from commentguard.source import collect_comments  # noqa: E402
 
-DEFAULT_CASES = ("<commentinject-v2 checkout>/"
-                 "data/cases.jsonl")
+# Path to CommentInject v2 data/cases.jsonl (core, 27 pairs). Clone https://github.com/sunny-chokshi/commentinject-v2
+# and set COMMENTINJECT_CASES, or pass --cases.
+DEFAULT_CASES = os.environ.get("COMMENTINJECT_CASES", "../commentinject-v2/data/cases.jsonl")
 
 
 def load_jsonl(p):
@@ -107,9 +108,10 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--pairs", nargs="*")
     ap.add_argument("--static-only", action="store_true")
-    ap.add_argument("--strategies", default=os.path.join(os.path.dirname(DEFAULT_CASES), "strategies.jsonl"))
+    ap.add_argument("--strategies", default=None, help="default: strategies.jsonl next to --cases")
     a = ap.parse_args()
 
+    a.strategies = a.strategies or os.path.join(os.path.dirname(a.cases), "strategies.jsonl")
     cases = load_jsonl(a.cases)
     fam = {s["strategy"]: s["family"] for s in load_jsonl(a.strategies)}
     for c in cases:
