@@ -1,6 +1,6 @@
 # Add to .pre-commit-config.yaml in your repository.
 repos:
-  - repo: https://github.com/OWNER/commentguard   # replace OWNER once the repository is public
+  - repo: https://github.com/sunny-chokshi/commentguard   # replace OWNER once the repository is public
     rev: v0.1.0
     hooks:
       - id: commentguard

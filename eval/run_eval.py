@@ -171,7 +171,8 @@ def main():
         summary["differential"] = differential(rows, cases)
         summary["raw_file"] = os.path.relpath(raw_path, os.path.dirname(HERE))
 
-    out = os.path.join(HERE, "results", f"summary_{a.model.replace(':', '-')}.json")
+    name = "summary_static_only.json" if a.static_only else f"summary_{a.model.replace(':', '-')}.json"
+    out = os.path.join(HERE, "results", name)
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w") as f:
         json.dump(summary, f, indent=2)

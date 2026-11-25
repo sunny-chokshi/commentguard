@@ -121,7 +121,7 @@ PR. See [`examples/github-workflow.yml`](examples/github-workflow.yml).
 ```yaml
 - uses: actions/checkout@v4
   with: { fetch-depth: 0 }
-- uses: OWNER/commentguard@v0.1.0     # once the repository is public
+- uses: sunny-chokshi/commentguard@v0.1.0     # once the repository is public
   with:
     mode: static          # or 'ollama': installs Ollama in the runner and pulls `model`
     fail-on: comment
@@ -135,7 +135,7 @@ differential review locally or on a self-hosted runner that already has Ollama.
 
 ```yaml
 repos:
-  - repo: https://github.com/OWNER/commentguard
+  - repo: https://github.com/sunny-chokshi/commentguard
     rev: v0.1.0
     hooks:
       - id: commentguard
