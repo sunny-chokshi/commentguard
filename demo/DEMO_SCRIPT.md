@@ -5,6 +5,13 @@ Expected output was captured on the author's Mac (Apple Silicon, Ollama, `qwen3.
 digest `d8b0f5e9760c`) on 2026-11-25. Small local models are sensitive to wording, so another
 model or Ollama version may give different verdicts.
 
+## Recording (Sunny)
+
+* macOS: press Cmd+Shift+5, choose "Record Selected Portion", and in Options pick your
+  microphone. Aim for 2:30 to 3:30; the rules allow 2 to 4 minutes.
+* Upload to YouTube as **Unlisted** (Devpost needs a YouTube or Vimeo link), then paste the link
+  into chat. Claude adds it to the Devpost form.
+
 ## Before recording (not shown)
 
 ```bash
@@ -128,17 +135,23 @@ on the left with the SAFE badge, the stripped code on the right with VULNERABLE 
 
 > "The report puts both views side by side and highlights the comment that did it."
 
-## 2:15 to 2:40. CI integration
+## 2:15 to 2:40. CI integration (browser)
+
+Show in the browser, in this order:
+1. https://github.com/sunny-chokshi/commentguard/actions : the green `selftest` run (unit tests,
+   plus the action scanning `demo/`).
+2. https://github.com/sunny-chokshi/commentguard/security/code-scanning : the CommentGuard alerts.
+   Open the one on `demo/orders.py`.
+
+Then in the terminal:
 
 ```bash
-head -40 out/report.sarif
 cat .pre-commit-hooks.yaml
-sed -n '1,30p' examples/github-workflow.yml
 ```
 
-> "The same results go out as SARIF 2.1.0, so GitHub code scanning shows blind spots as alerts
-> on the pull request. There is a composite GitHub Action that scans only the changed Python
-> files, and a pre-commit hook for static mode."
+> "The same results go out as SARIF 2.1.0, so GitHub code scanning shows them as alerts. This
+> repository runs its own action on every push. There is also a pre-commit hook for static mode.
+> In CI the action scans only changed Python files by default."
 
 ## 2:40 to 3:00. Evaluation and honesty
 
@@ -147,9 +160,11 @@ sed -n '/## Headline numbers/,/^Per strategy/p' eval/RESULTS.md
 ```
 
 > "I evaluated it on the 756 core cases of my CommentInject v2 benchmark with qwen3.5 4B.
-> The numbers and the limits are in eval/RESULTS.md: small model, Python only, one run, and it
-> is my own benchmark. CommentGuard was built this week with AI assistance from Claude Code.
-> Thanks for watching."
+> The differential check flagged all 54 cases where a comment hid a real bug, but it also raised
+> false blind spots on 16 percent of already-fixed code. The regex detector caught only 5 of 32
+> new phrasings I wrote after freezing its rules, so it is a quick filter, not the defence.
+> Small model, Python only, one run, my own benchmark: the limits are in eval/RESULTS.md.
+> CommentGuard was built this week with AI assistance from Claude Code. Thanks for watching."
 
 ---
 
