@@ -116,12 +116,13 @@ It was not used in the evaluation below.
 
 **GitHub Action** (`action.yml`, composite). It scans the Python files changed in a push or pull
 request, writes SARIF and uploads it to code scanning. Blind spots then show up as alerts on the
-PR. See [`examples/github-workflow.yml`](examples/github-workflow.yml).
+PR. Set `scan-all: "true"` to scan every file under `paths` instead of only changed files.
+See [`examples/github-workflow.yml`](examples/github-workflow.yml).
 
 ```yaml
-- uses: actions/checkout@v4
+- uses: actions/checkout@v5
   with: { fetch-depth: 0 }
-- uses: sunny-chokshi/commentguard@v0.1.0     # once the repository is public
+- uses: sunny-chokshi/commentguard@v0.1.0
   with:
     mode: static          # or 'ollama': installs Ollama in the runner and pulls `model`
     fail-on: comment

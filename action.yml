@@ -18,6 +18,9 @@ inputs:
   base-ref:
     description: "Git ref to diff against. Default: the PR base SHA, or the previous commit on push. Empty diff base scans everything under 'paths'."
     default: ""
+  scan-all:
+    description: "'true' = scan every file under 'paths' instead of only files changed since the base ref."
+    default: "false"
   fail-on:
     description: "blind-spot | comment | any | never"
     default: "blind-spot"
@@ -42,7 +45,7 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: ${{ inputs.python-version }}
 
@@ -70,13 +73,14 @@ runs:
         CG_MODEL: ${{ inputs.model }}
         CG_BASE: ${{ inputs.base-ref }}
         CG_FAIL_ON: ${{ inputs.fail-on }}
+        CG_SCAN_ALL: ${{ inputs.scan-all }}
         CG_SARIF: ${{ inputs.sarif-file }}
         PR_BASE: ${{ github.event.pull_request.base.sha }}
         PUSH_BEFORE: ${{ github.event.before }}
       run: |
         base="$CG_BASE"
         if [ -z "$base" ]; then base="${PR_BASE:-$PUSH_BEFORE}"; fi
-        if [ "$base" = "0000000000000000000000000000000000000000" ]; then base=""; fi
+        if [ "$base" = "0000000000000000000000000000000000000000" ] || [ "$CG_SCAN_ALL" = "true" ]; then base=""; fi
         args=(scan)
         read -r -a paths <<< "$CG_PATHS"
         args+=("${paths[@]}")
@@ -96,7 +100,7 @@ runs:
 
     - name: Upload SARIF
       if: always() && inputs.upload-sarif == 'true' && hashFiles(inputs.sarif-file) != ''
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: ${{ inputs.sarif-file }}
         category: commentguard
